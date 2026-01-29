@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Quest: Secret Level</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0f172a;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .active { display: flex; }
+
+        /* Логотип */
+        #logo-text {
+            font-size: 3rem;
+            letter-spacing: 10px;
+            font-weight: bold;
+            animation: logoAnim 4s forwards;
+        }
+
+        @keyframes logoAnim {
+            0% { opacity: 0; transform: scale(0.8); filter: blur(10px); }
+            50% { opacity: 1; transform: scale(1); filter: blur(0); }
+            100% { opacity: 0; }
+        }
+
+        /* Поле пароля */
+        #password-area {
+            margin-top: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            animation: fadeIn 1s forwards;
+        }
+
+        input[type="password"] {
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 2px solid #fbbf24;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            width: 300px;
+            outline: none;
+            text-align: center;
+        }
+
+        .unlock-btn, .cheese-btn {
+            padding: 12px 30px;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            color: #0f172a;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 1.1rem;
+            margin: 10px;
+        }
+
+        .unlock-btn:hover, .cheese-btn:hover { 
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.3);
+        }
+
+        /* Контент */
+        h1 { color: #fbbf24; margin-bottom: 10px; }
+        
+        .message-box {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 700px;
+            line-height: 1.6;
+            margin: 20px 0;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        #ai-text {
+            white-space: pre-wrap;
+            text-align: left;
+            border-left: 3px solid #fbbf24;
+            padding-left: 15px;
+            color: #e2e8f0;
+        }
+
+        .book-img {
+            width: 200px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .book-img:hover { transform: scale(1.1) rotate(-3deg); }
+
+        .signature { 
+            font-size: 0.75rem; 
+            color: #475569; 
+            margin-top: 20px;
+            font-family: monospace;
+        }
+
+        /* СТИЛИ ДЛЯ СЫРНОЙ ЛАБОРАТОРИИ */
+        .cheese-header {
+            color: #ffd166;
+            text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
+            margin-bottom: 20px;
+        }
+
+        .lab-container {
+            background: rgba(44, 27, 15, 0.7);
+            border-radius: 20px;
+            padding: 30px;
+            border: 3px solid #f4a261;
+            box-shadow: 0 0 40px rgba(244, 162, 97, 0.3);
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        #video {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 15px;
+            border: 4px solid #ffd166;
+            transform: scaleX(-1); /* Зеркалим для естественного отображения */
+            margin: 20px 0;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .cheese-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        /* ЭКРАН ЗАГРУЗКИ */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cheese-loader {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #ffd166;
+            border-top: 8px solid #f4a261;
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+            margin-bottom: 30px;
+        }
+
+        #loading-text {
+            font-size: 1.5rem;
+            color: #ffd166;
+            text-align: center;
+            margin-top: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        #result-image {
+            max-width: 90%;
+            max-height: 500px;
+            border-radius: 15px;
+            border: 5px solid #fbbf24;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .back-btn {
+            margin-top: 30px;
+            padding: 10px 20px;
+            background: #475569;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+
+        /* АНИМАЦИИ */
+        @keyframes fadeIn { 
+            from { opacity: 0; } 
+            to { opacity: 1; } 
+        }
+
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+
+        @keyframes pulse { 
+            0%, 100% { opacity: 0.7; } 
+            50% { opacity: 1; } 
+        }
+
+        @keyframes cheeseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 209, 102, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(255, 209, 102, 0.8); }
+        }
+
+        .cheese-glow {
+            animation: cheeseGlow 2s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЭКРАН 0: ЛОГО -->
+    <div id="screen-0" class="screen active">
+        <div id="logo-text">LEVA PRODUCTIONS</div>
+    </div>
+
+    <!-- ЭКРАН 1: ПРИВЕТСТВИЕ -->
+    <div id="screen-1" class="screen">
+        <h1>Happy Birthday, Mom!</h1>
+        <p>Для доступа к секретному поздравлению нужен "ключ доступа"...</p>
+        
+        <div id="book-trigger">
+            <img src="https://ir.ozone.ru/s3/multimedia-2/c1000/6818803850.jpg" class="book-img" onclick="showPasswordInput()" alt="Book 1">
+            <p style="margin-top: 10px; color: #fbbf24;">Нажми на учебник, чтобы ввести пароль</p>
+        </div>
+
+        <div id="password-area">
+            <input type="password" id="api-key-input" placeholder="Введите API-ключ как пароль...">
+            <button class="unlock-btn" onclick="startFinalPage()">Открыть подарок</button>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 2: ТАЙНОЕ ПОЗДРАВЛЕНИЕ -->
+    <div id="screen-2" class="screen">
+        <h1>Secret Greeting Unlocked</h1>
+        
+        <div class="message-box">
+            <!-- Вставьте сюда ваш фиксированный текст -->
+            <p><strong>Мой текст:</strong> Дорогая мама! Мы решили, что обычных слов недостаточно, поэтому подключили мощь Искусственного Интеллекта, чтобы он выразил всю глубину наших чувств к тебе. Посмотри, как он старается:</p>
+            
+            <div id="ai-text">Ожидание сигнала от нейросети...</div>
+        </div>
+
+        <div class="signature">Нейросеть поздравление с помощью OpenRouter AI API | streaming mode</div>
+
+        <div style="margin-top: 30px;">
+            
+            <div style="margin-top: 20px;">
+                <a href="index.html" target="_blank">
+                    <img src="https://avatars.mds.yandex.net/get-mpic/4420180/img_id6877734780920020011.jpeg/orig" class="book-img" alt="Book 2">
+                </a>
+                <p style="font-size: 0.8rem; margin-top: 10px;">The Ultimate English Guide for the Best Mom</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 3: СЫРНАЯ ЛАБОРАТОРИЯ -->
+    <div id="screen-3" class="screen">
+        <h1 class="cheese-header">🧀 СЕКРЕТНАЯ СЫРНАЯ ЛАБОРАТОРИЯ 🧀</h1>
+        
+        <div class="lab-container">
+            <p style="margin-bottom: 20px; font-size: 1.1rem;">
+                <strong>Эксперимент:</strong> Преобразование человека в сырную форму с помощью нейросетей
+            </p>
+            
+            <div id="camera-container">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas"></canvas>
+            </div>
+            
+            <div class="cheese-controls">
+                <button class="cheese-btn" onclick="startCamera()" id="start-camera-btn">
+                    📷 АКТИВИРОВАТЬ КАМЕРУ
+                </button>
+                <button class="cheese-btn" onclick="capturePhoto()" id="capture-btn" style="display: none;">
+                    🧀 СФОТОГРАФИРОВАТЬ СЫРНЫЙ ОБЪЕКТ
+                </button>
+                <button class="cheese-btn" onclick="goBack()">
+                    🔙 НАЗАД К ПОЗДРАВЛЕНИЮ
+                </button>
+            </div>
+            
+            <p style="font-size: 0.9rem; color: #f4a261; margin-top: 20px;">
+                ⚠️ Внимание: Лаборатория использует передовые нейросетевые технологии.<br>
+                Результат может быть... сырным!
+            </p>
+        </div>
+        
+        <div class="signature">CheeseLab v3.14 | Levа Productions Experimental Division</div>
+    </div>
+
+    <!-- ЭКРАН ЗАГРУЗКИ -->
+    <div id="loading-screen">
+        <div class="cheese-loader"></div>
+        <h2 style="color: #ffd166; margin-bottom: 10px;">СЫРНАЯ ТРАНСФОРМАЦИЯ</h2>
+        <div id="loading-text">Подождите чуть-чуть...</div>
+        <p style="color: #94a3b8; margin-top: 20px;">
+            ИИ анализирует фото и применяет сырные фильтры...
+        </p>
+        
+        <!-- Аудио для загрузки (скрытое) -->
+        <audio id="loading-music" loop>
+            <!-- Вставьте сюда ссылку на вашу музыку или локальный файл -->
+            <source src="ваша-музыка.mp3" type="audio/mpeg">
+            Ваш браузер не поддерживает аудио
+        </audio>
+        
+        <img id="result-image" alt="Результат трансформации">
+        <button class="back-btn" onclick="hideResult()" style="display: none; margin-top: 20px;">
+            СДЕЛАТЬ ЕЩЕ ОДНУ ФОТО
+        </button>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        let USER_API_KEY = "";
+        let stream = null;
+        let currentScreen = 'screen-0';
+
+        // Ротация экранов
+        setTimeout(() => {
+            transitionScreens('screen-0', 'screen-1');
+        }, 4000);
+
+        function transitionScreens(hideId, showId) {
+            document.getElementById(hideId).style.display = 'none';
+            document.getElementById(showId).style.display = 'flex';
+            currentScreen = showId;
+        }
+
+        function showPasswordInput() {
+            document.getElementById('password-area').style.display = 'flex';
+            document.getElementById('book-trigger').style.opacity = '0.5';
+        }
+
+        async function startFinalPage() {
+            const key = document.getElementById('api-key-input').value;
+            if (!key || key.length < 10) {
+                alert("Пожалуйста, введите корректный API ключ (пароль)");
+                return;
+            }
+            USER_API_KEY = key;
+            transitionScreens('screen-1', 'screen-2');
+            runAiStreaming();
+        }
+
+        // Логика потоковой генерации текста
+        async function runAiStreaming() {
+            const container = document.getElementById('ai-text');
+            const prompt = "Напиши теплое, очень доброе поздравление для мамы с днем рождения на русском языке с вкраплениями красивых английских слов. Напиши о том, какая она замечательная.Не используй markdown только чистый текст";
+            
+            container.innerText = "";
+
+            try {
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${USER_API_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "model": "openai/gpt-oss-120b",
+                        "messages": [{ "role": "user", "content": prompt }],
+                        "stream": true
+                    })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split("\n");
+
+                    for (const line of lines) {
+                        if (line.startsWith("data: ")) {
+                            const dataStr = line.replace("data: ", "");
+                            if (dataStr === "[DONE]") break;
+                            try {
+                                const data = JSON.parse(dataStr);
+                                const content = data.choices[0].delta.content || "";
+                                container.innerText += content;
+                            } catch (e) {}
+                        }
+                    }
+                }
+            } catch (err) {
+                container.innerText = "Упс! Кажется, пароль (ключ) не подошел. Но главное — мы тебя любим!";
+                console.error(err);
+            }
+        }
+
+        // Функции для Сырной Лаборатории
+        function goToCheeseLab() {
+            transitionScreens('screen-2', 'screen-3');
+        }
+
+        function goBack() {
+            transitionScreens('screen-3', 'screen-2');
+        }
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                document.getElementById('start-camera-btn').style.display = 'none';
+                document.getElementById('capture-btn').style.display = 'block';
+                
+                video.classList.add('cheese-glow');
+                
+            } catch (err) {
+                alert("Не удалось получить доступ к камере. Проверьте разрешения.");
+                console.error("Camera error:", err);
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            showLoadingScreen();
+            
+            // Останавливаем камеру
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Отправляем фото в нейросеть через 1 секунду (для эффекта)
+            setTimeout(() => sendToAI(canvas), 1000);
+        }
+
+        function showLoadingScreen() {
+            const loadingScreen = document.getElementById('loading-screen');
+            loadingScreen.style.display = 'flex';
+            
+            // Воспроизводим музыку, если есть
+            const music = document.getElementById('loading-music');
+            if (music.src) {
+                music.volume = 0.3;
+                music.play().catch(e => console.log("Audio play failed:", e));
+            }
+            
+            // Меняем текст каждые 3 секунды
+            const texts = [
+                "Подождите чуть-чуть...",
+                "Добавляем сырные нотки...",
+                "Трансформируем пиксели...",
+                "Создаем вкусный результат...",
+                "Почти готово..."
+            ];
+            
+            let index = 0;
+            const textElement = document.getElementById('loading-text');
+            
+            const textInterval = setInterval(() => {
+                textElement.textContent = texts[index];
+                index = (index + 1) % texts.length;
+            }, 3000);
+            
+            window.loadingTextInterval = textInterval;
+        }
+
+        async function sendToAI(canvas) {
+            try {
+                // Конвертируем фото в base64
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                const base64Data = imageData.split(',')[1];
+                
+                // Отправляем запрос в OpenRouter для генерации изображения
+                const response = await fetch("https://openrouter.ai/api/v1/images/generations", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${USER_API_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "model": "google/gemini-2.5-flash-image",
+                        "prompt": "Преврати это фото в веселого персонажа-сыра. Сделай человека в виде сыра в мультяшном стиле. Яркие цвета, дружелюбный вид, сырные детали. Стиль: добрый мультфильм",
+                        "n": 1,
+                        "size": "512x512",
+                        "response_format": "url"
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
+                
+                // Показываем результат
+                showResult(data.data[0].url);
+                
+            } catch (err) {
+                console.error("AI Error:", err);
+                document.getElementById('loading-text').textContent = 
+                    "Ошибка трансформации! Но ты все равно самая сырная мама! 🧀";
+                    
+                // Показываем заглушку
+                setTimeout(() => {
+                    document.getElementById('loading-text').textContent = "Попробуйте еще раз!";
+                    document.querySelector('.back-btn').style.display = 'block';
+                }, 3000);
+            }
+        }
+
+        function showResult(imageUrl) {
+            clearInterval(window.loadingTextInterval);
+            
+            const resultImage = document.getElementById('result-image');
+            const loadingText = document.getElementById('loading-text');
+            const backBtn = document.querySelector('.back-btn');
+            
+            resultImage.src = imageUrl;
+            resultImage.style.display = 'block';
+            loadingText.textContent = "Трансформация завершена! 🎉";
+            
+            // Останавливаем музыку
+            const music = document.getElementById('loading-music');
+            music.pause();
+            
+            // Показываем кнопку
+            setTimeout(() => {
+                backBtn.style.display = 'block';
+            }, 2000);
+        }
+
+        function hideResult() {
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('result-image').style.display = 'none';
+            document.querySelector('.back-btn').style.display = 'none';
+            
+            // Возвращаемся в лабораторию
+            transitionScreens(currentScreen, 'screen-3');
+        }
+    </script>
+</body>
+</html>
